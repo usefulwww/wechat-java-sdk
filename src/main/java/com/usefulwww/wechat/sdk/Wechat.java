@@ -27,6 +27,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -46,50 +48,44 @@ import org.xml.sax.SAXException;
  * @author lyun@nashihou.cn
  */
 public class Wechat {
-    private static Logger logger = LoggerFactory.getLogger(Wechat.class);
+    private Logger logger = LoggerFactory.getLogger(Wechat.class);
     
-    static String accessToken = "";
-    
-    static HttpClient client = new HttpClient();
+    private HttpClient client = new HttpClient();
     
     /**
-     * 
+     * 回复消息
      * @param echostr
      * @param in
      * @return
      */
-    public static String replay(String echostr,InputStream in,CallBack callback) {
-        String replay = "";
-        
-        if (echostr!=null && "".equals(echostr) == false) {
+    public String replay(String echostr,Message msg,CallBack callback) {
+    	String replay = "";
+        if (echostr != null && "".equals(echostr) == false) {
             replay = echostr;
         }
         
-        // 处理接收消息    
-        Message msg = new Message();
-        msg = parse(in);
-        
-     // 取得消息类型  
-        String msgType = msg.getMsgType();
-        //根据消息类型获取对应的消息内容  
-        if (MsgType.Text.toString().equals(msgType)) {
-            //文本消息  
-            logger.debug("开发者微信号：" + msg.getToUserName());
-            logger.debug("发送方帐号：" + msg.getFromUserName());
-            logger.debug("消息创建时间：" + msg.getCreateTime());
-            logger.debug("消息内容：" + msg.getContent());
-            logger.debug("消息Id：" + msg.getMsgId());
-        }
-        
-        if(callback!=null){
+    	if(callback!=null){
         	return replay + callback.replay(msg);
         } else {
         	return null;
         }
+    }
+    /**
+     * 回复消息
+     * @param echostr
+     * @param in
+     * @return
+     */
+    public String replay(String echostr,InputStream in,CallBack callback) {
+        // 处理接收消息    
+        Message msg = new Message();
+        msg = parse(in);
+
+        return replay(echostr,msg,callback);
         
     }
     
-    public static Message parse(InputStream in) {
+    public Message parse(InputStream in) {
         Message msg = new Message();
         Field[] fields = msg.getClass().getDeclaredFields();
         try {
@@ -158,7 +154,7 @@ public class Wechat {
      * @param echostr//随机字符串
      * @return
      */
-    public static boolean vaild (String token,String signature,String timestamp,String nonce,String echostr) {
+    public boolean vaild (String token,String signature,String timestamp,String nonce,String echostr) {
         //验证URL真实性    
             List<String> list = new ArrayList<String>();  
             list.add(token);  
@@ -181,7 +177,7 @@ public class Wechat {
      * @param str 代加密字符串
      * @return
      */
-    public static String SHA1(String str) {
+    public String SHA1(String str) {
         if (str == null) {
             return null;
         }
@@ -204,24 +200,42 @@ public class Wechat {
         }
     }
     
-    public static String getAccessToken() {
-    	if(accessToken==null || "".equals(accessToken)){
-    		String url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=APPID&secret=APPSECRET";
-    		client.sendGet(url);
-    		String content = client.getContent();
-    		logger.debug(content);
-    		client.close();
-    	}
+    /**
+     * 获取 accesstoken
+     * @return
+     */
+    public String getAccessToken(String appid,String secret) {
+		String url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid="+appid+"&secret="+secret;
+		client.sendGet(url);
+		String content = client.getContent();
+		logger.debug(content);
+		client.close();
+		
+		//TODO 解析json 获取token信息
+		String accessToken = "";
+		String regex = "\"access_token\":\"([^\"]+)\"";
+		  Pattern p = Pattern.compile(regex);
+		  Matcher m = p.matcher(content);
+		  if(m.find()){
+			  accessToken = m.group(1);
+		  }
     	
     	return accessToken;
     }
     
-    public static boolean sendCustomMsg(String json) {
-    	String url="https://api.weixin.qq.com/cgi-bin/message/custom/send?access_token="+getAccessToken();
+    /**
+     * 发送客服信息
+     * @param accessToken
+     * @param json
+     * @return
+     */
+    public boolean sendCustomMsg(String accessToken,String json) {
+    	String url="https://api.weixin.qq.com/cgi-bin/message/custom/send?access_token="+accessToken;
     	client.sendPost(url,json);
     	String content = client.getContent();
 		logger.debug(content);
 		client.close();
+		//TODO 验证是否发送完毕
     	return false;
     }
 }
