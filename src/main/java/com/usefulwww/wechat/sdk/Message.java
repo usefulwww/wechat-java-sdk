@@ -55,7 +55,27 @@ public class Message {
     // 事件  
     private String Event;  
     private String EventKey;  
-    private String Ticket;  
+    private String Ticket; 
+    
+    //Event 	事件类型，scancode_waitmsg 
+    private String ScanCodeInfo;// 	扫描信息
+    private String ScanType;// 	扫描类型，一般是qrcode
+    private String ScanResult;// 	扫描结果，即二维码对应的字符串信息 
+    
+    //Event 	事件类型，pic_sysphoto 
+    //Event 	事件类型，pic_photo_or_album
+    //Event 	事件类型，pic_weixin 
+    private String SendPicsInfo;// 	发送的图片信息
+    private Long Count;// 	发送的图片数量
+    private String PicList;// 	图片列表
+    private String PicMd5Sum;// 	图片的MD5值，开发者若需要，可用于验证接收到图片 
+    
+    //Event 	事件类型，location_select 
+    private String SendLocationInfo;// 	发送的位置信息
+    private String Location_X;// 	X坐标信息
+    private String Location_Y;// 	Y坐标信息
+    private String Poiname;// 	朋友圈POI的名字，可能为空 
+    
     // 音乐
     private String MusicUrl;
     private String HQMusicUrl;

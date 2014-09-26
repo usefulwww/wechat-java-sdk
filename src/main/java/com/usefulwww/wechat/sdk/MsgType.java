@@ -21,7 +21,7 @@ package com.usefulwww.wechat.sdk;
  * @author lyun@nashihou.cn
  */
 public enum MsgType {
-	Text("text"), Image("image"), Music("music"), Video("video"), Voice("voice"), Location("location"), Link("link");
+	Text("text"), Image("image"), Music("music"), Video("video"), Voice("voice"), Location("location"), Link("link"),Event("event");
 	
 	private String msgType = "";
 

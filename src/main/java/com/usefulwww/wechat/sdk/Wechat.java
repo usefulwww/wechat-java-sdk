@@ -108,11 +108,13 @@ public class Wechat {
                     	
                         try {
                         	Method m = msg.getClass().getDeclaredMethod("set"+f.getName(),f.getType());
-                            if (f.getType() == java.lang.Long.class) {
-                            	m.invoke(msg, Long.parseLong(el.getTextContent()));
-                            } else {
-                            	m.invoke(msg,el.getTextContent());
-                            }
+                        	if(m!=null) {
+	                            if (f.getType() == java.lang.Long.class) {
+	                            	m.invoke(msg, Long.parseLong(el.getTextContent()));
+	                            } else {
+	                            	m.invoke(msg,el.getTextContent());
+	                            }
+                        	}
                         } catch (IllegalArgumentException ex) {
                             logger.error(ex.getMessage());
                             ex.printStackTrace();
