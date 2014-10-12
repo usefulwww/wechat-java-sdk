@@ -14,18 +14,50 @@
  * limitations under the License.
  */
 
-package com.usefulwww.wechat.sdk;
+package com.usefulwww.core.wechat;
 
 /**
  * 
  * @author lyun@nashihou.cn
  */
-public enum MsgType {
-	Text("text"), Image("image"), Music("music"), Video("video"), Voice("voice"), Location("location"), Link("link"),Event("event");
+public enum MessageType {
+	/**
+	 * 文本消息
+	 */
+	Text("text"),
+	/**
+	 * 图片消息
+	 */
+	Image("image"),
+	/**
+	 * 音乐消息
+	 */
+	Music("music"), 
+	Video("video"), 
+	Voice("voice"), 
+	Location("location"), 
+	Link("link"),
+	Event("event"),
+	/**
+	 * 菜单点击弹出网页事件
+	 */
+	EventClick("CLICK"),
+	/**
+	 * 菜单点击返回消息事件
+	 */
+	EventView("VIEW"),
+	/**
+	 * 关注事件
+	 */
+	EventSubscribe("subscribe"),
+	/**
+	 * 取消关注事件
+	 */
+	EventUnSubscribe("unsubscribe");
 	
 	private String msgType = "";
 
-	MsgType(String msgType) {
+	MessageType(String msgType) {
 		this.msgType = msgType;
 	}
 

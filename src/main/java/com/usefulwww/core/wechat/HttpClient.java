@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.usefulwww.wechat.sdk;
+package com.usefulwww.core.wechat;
 
 import java.io.BufferedReader;
 import java.io.IOException;

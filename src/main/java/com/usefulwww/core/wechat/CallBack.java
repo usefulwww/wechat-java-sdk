@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.usefulwww.wechat.sdk;
+package com.usefulwww.core.wechat;
 
 /**
 *
@@ -22,5 +22,10 @@ package com.usefulwww.wechat.sdk;
 */
 public interface CallBack {
 
-	public String replay(Message msg);
+	/**
+	 * 回复消息
+	 * @param send  微信传来的消息
+	 * @return
+	 */
+	public String replay(Message send);
 }
