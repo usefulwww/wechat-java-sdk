@@ -8,7 +8,7 @@ import junit.framework.TestCase;
 public class WechatTest extends TestCase{
 
 	public void testSubScribe() {
-		//从微信传来的信息
+		//模拟从微信传来的信息
 		String send = "<xml>";
 		send += "<ToUserName><![CDATA[toUser]]>user1</ToUserName>";
 		send += "<FromUserName><![CDATA[FromUser]]>server1</FromUserName>";
@@ -47,7 +47,7 @@ public class WechatTest extends TestCase{
 		String echostr = "123";
 		
 		//待回复的信息
-		String replay =wechat.replay(echostr, in, callback);
+		String replay =wechat.reply(echostr, in, callback);
 		
 		System.out.println(replay);
 	}

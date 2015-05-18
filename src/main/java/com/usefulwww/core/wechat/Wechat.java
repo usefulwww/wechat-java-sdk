@@ -76,7 +76,7 @@ public class Wechat {
      * @param in
      * @return
      */
-    public String replay(String echostr,InputStream in,CallBack callback) {
+    public String reply(String echostr,InputStream in,CallBack callback) {
         // 处理接收消息    
         Message msg = new Message();
         msg = parse(in);
