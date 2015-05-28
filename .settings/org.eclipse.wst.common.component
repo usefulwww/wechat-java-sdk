@@ -2,8 +2,6 @@
     <wb-module deploy-name="wechat-java-sdk">
         <wb-resource deploy-path="/" source-path="/src/main/java"/>
         <wb-resource deploy-path="/" source-path="/src/main/resources"/>
-        <wb-resource deploy-path="/" source-path="/src/test/java"/>
-        <wb-resource deploy-path="/" source-path="/src/test/resources"/>
         <property name="context-root" value="wechat-java-sdk"/>
         <property name="java-output-path" value="/wechat-java-sdk/target/classes"/>
     </wb-module>

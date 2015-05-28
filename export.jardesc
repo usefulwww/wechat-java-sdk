@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<jardesc>
+    <jar path="D:/Backup/Desktop/wechat-java-sdk.jar"/>
+    <options buildIfNeeded="true" compress="true" descriptionLocation="/wechat-java-sdk/export.jardesc" exportErrors="true" exportWarnings="true" includeDirectoryEntries="false" overwrite="false" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
+    <storedRefactorings deprecationInfo="true" structuralOnly="false"/>
+    <selectedProjects/>
+    <manifest generateManifest="true" manifestLocation="" manifestVersion="1.0" reuseManifest="false" saveManifest="false" usesManifest="true">
+        <sealing sealJar="true">
+            <packagesToSeal/>
+            <packagesToUnSeal/>
+        </sealing>
+    </manifest>
+    <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
+        <file path="/wechat-java-sdk/nb-configuration.xml"/>
+        <file path="/wechat-java-sdk/LICENSE"/>
+        <file path="/wechat-java-sdk/README.md"/>
+        <file path="/wechat-java-sdk/.project"/>
+        <javaElement handleIdentifier="=wechat-java-sdk/src\/test\/java"/>
+        <javaElement handleIdentifier="=wechat-java-sdk/src\/test\/resources"/>
+        <file path="/wechat-java-sdk/.gitignore"/>
+        <file path="/wechat-java-sdk/pom.xml"/>
+        <file path="/wechat-java-sdk/.classpath"/>
+        <javaElement handleIdentifier="=wechat-java-sdk/src\/main\/java"/>
+        <javaElement handleIdentifier="=wechat-java-sdk/src\/main\/resources"/>
+    </selectedElements>
+</jardesc>

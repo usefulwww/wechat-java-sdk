@@ -24,8 +24,8 @@ public interface CallBack {
 
 	/**
 	 * 回复消息
-	 * @param send  微信传来的消息
+	 * @param msg  微信传来的消息
 	 * @return
 	 */
-	public String replay(Message send);
+	public String reply(Message msg);
 }

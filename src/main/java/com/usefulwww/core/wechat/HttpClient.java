@@ -27,171 +27,112 @@ import java.net.ProtocolException;
 import java.net.URL;
 import java.util.Map;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSession;
+
 /**
 *
 * @author lyun@nashihou.cn
 */
 public class HttpClient {
-
+	
+	public enum METHOD {POST,GET}
+	
 	private HttpURLConnection urlConnection = null;
 
-	/**
-	 * 发送GET请求
-	 * 
-	 * @param urlString
-	 *            URL地址
-	 * 
-	 */
-	public boolean sendGet(String urlString) {
-		return this.send(urlString, "GET", null, null);
-	}
-
-	/**
-	 * 发送GET请求
-	 * 
-	 * @param urlString
-	 *            URL地址
-	 * @param params
-	 *            参数集合
-	 * 
-	 * @throws IOException
-	 */
-	public boolean sendGet(String urlString, Map<String, String> params){
-		return this.send(urlString, "GET", params, null);
-	}
-
-	/**
-	 * 发送GET请求
-	 * 
-	 * @param urlString
-	 *            URL地址
-	 * @param params
-	 *            参数集合
-	 * @param propertys
-	 *            请求属性
-	 * 
-	 * @throws IOException
-	 */
-	public boolean sendGet(String urlString, Map<String, String> params,
-			Map<String, String> propertys) {
-		return this.send(urlString, "GET", params, propertys);
-	}
-
-	/**
-	 * 发送POST请求
-	 * 
-	 * @param urlString
-	 *            URL地址
-	 * 
-	 * @throws IOException
-	 */
-	public boolean sendPost(String urlString) {
-		return this.send(urlString, "POST", null, null);
-	}
-
-	/**
-	 * 发送POST请求
-	 * 
-	 * @param urlString
-	 *            URL地址
-	 * @param params
-	 *            参数集合
-	 * 
-	 * @throws IOException
-	 */
-	public boolean sendPost(String urlString, Map<String, String> params){
-		return this.send(urlString, "POST", params, null);
-	}
-
-	/**
-	 * 发送POST请求
-	 * 
-	 * @param urlString
-	 *            URL地址
-	 * @param params
-	 *            参数集合
-	 * @param propertys
-	 *            请求属性
-	 * 
-	 * @throws IOException
-	 */
-	public boolean sendPost(String urlString, Map<String, String> params,
-			Map<String, String> propertys) {
-		return this.send(urlString, "POST", params, propertys);
-	}
-
-	/**
-	 * 发送POST请求
-	 * 
-	 * @param urlString
-	 *            URL地址
-	 * @param data
-	 *            POST内容
-	 */
-	public boolean sendPost(String urlString, String data) {
-		try {
-			URL url = new URL(urlString);
-			urlConnection = (HttpURLConnection) url.openConnection();
-			urlConnection.setRequestMethod("POST");
-			urlConnection.setDoOutput(true);
-			urlConnection.setDoInput(true);
-			urlConnection.setUseCaches(false);
-			if(data !=null && data!="") {
-				urlConnection.getOutputStream().write(data.getBytes());
-				urlConnection.getOutputStream().flush();
-				urlConnection.getOutputStream().close();
-			}
+	
+	HostnameVerifier hv = new HostnameVerifier() {
+		@Override
+		public boolean verify(String urlHostName, SSLSession session) {
+			System.out.println("Warning: URL Host: " + urlHostName + " vs. "
+					+ session.getPeerHost());
 			return true;
-		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ProtocolException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
-
-		return false;
+	};
+	    
+	public boolean send(String urlString, METHOD method){
+		return this.send(urlString,method,null);
+	}
+	/**
+	 * 发送HTTP请求
+	 * 
+	 */
+	public boolean send(String urlString, METHOD method, String json) {
+		byte[] data = null;
+		if(null!=json && "".equals(json)==false){
+			try {
+				data = json.getBytes("UTF-8");
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
+			}
+		}
+		return this.send(urlString, method, null, null, data);
+	}
+		
+	/**
+	 * 发送HTTP请求
+	 * 
+	 */
+	public boolean send(String urlString, METHOD method,
+			Map<String, String> parameters, Map<String, String> propertys) {
+		return this.send(urlString, method, parameters, propertys,null);
 	}
 	
 	/**
 	 * 发送HTTP请求
 	 * 
 	 */
-	public boolean send(String urlString, String method,
-			Map<String, String> parameters, Map<String, String> propertys) {
+	public boolean send(String urlString, METHOD method,
+			Map<String, String> parameters, Map<String, String> propertys,byte[] data) {
 		StringBuffer param = new StringBuffer();
-		for (String key : parameters.keySet()) {
-			param.append("&");
-			param.append(key).append("=").append(parameters.get(key));
+		String method_str = "GET";
+		if(null != parameters){
+			switch (method) {
+			case GET:
+				if(urlString.indexOf('?')>0){
+					urlString += param.toString();
+				} else {
+					urlString += "?" + param.toString().substring(1);
+				}
+				break;
+			case POST:
+				method_str="POST";
+				for (String key : parameters.keySet()) {
+					param.append("&");
+					param.append(key).append("=").append(parameters.get(key));
+				}
+				break;
+			default:
+				break;
+			}
+
 		}
 		
-		if (method.equalsIgnoreCase("GET") && parameters != null) {
-			if(urlString.indexOf('?')>0){
-				urlString += param.toString();
-			} else {
-				urlString += "?" + param.toString().substring(1);
-			}
-		}
 		
 		try {
 			URL url = new URL(urlString);
 			urlConnection = (HttpURLConnection) url.openConnection();
-			urlConnection.setRequestMethod(method);
+			urlConnection.setRequestMethod(method_str);
 			urlConnection.setDoOutput(true);
 			urlConnection.setDoInput(true);
 			urlConnection.setUseCaches(false);
-
+			urlConnection.setInstanceFollowRedirects(true);
+			urlConnection.setRequestProperty("Accept", "application/json"); // 设置接收数据的格式
+			urlConnection.setRequestProperty("Content-Type", "application/json"); // 设置发送数据的格式
 			if (propertys != null){
 				for (String key : propertys.keySet()) {
 					urlConnection.addRequestProperty(key, propertys.get(key));
 				}
 			}
 			
-			if (method.equalsIgnoreCase("POST") && parameters != null) {
-				urlConnection.getOutputStream().write(param.toString().getBytes());
+			if (method==METHOD.POST) {
+				if(null != param){
+					urlConnection.getOutputStream().write(param.toString().getBytes("UTF-8"));
+				}
+				if(null != data){
+					urlConnection.getOutputStream().write(data);
+				}
 				urlConnection.getOutputStream().flush();
 				urlConnection.getOutputStream().close();
 			}
@@ -205,6 +146,9 @@ public class HttpClient {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

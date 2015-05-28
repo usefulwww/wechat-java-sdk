@@ -52,20 +52,29 @@ public class Wechat {
     
     private HttpClient client = new HttpClient();
     
+    private String appId;
+    
+    private String appSecret;
+    
+    public void setOptions(String appId,String appSecret){
+    	this.appId = appId;
+    	this.appSecret = appSecret;
+    }
+    
     /**
      * 回复消息
      * @param echostr
      * @param in
      * @return
      */
-    public String replay(String echostr,Message msg,CallBack callback) {
+     public String reply(String echostr,Message msg,CallBack callback) {
     	String replay = "";
         if (echostr != null && "".equals(echostr) == false) {
             replay = echostr;
         }
         
     	if(callback!=null){
-        	return replay + callback.replay(msg);
+        	return replay + callback.reply(msg);
         } else {
         	return null;
         }
@@ -81,9 +90,48 @@ public class Wechat {
         Message msg = new Message();
         msg = parse(in);
 
-        return replay(echostr,msg,callback);
+        return reply(echostr,msg,callback);
         
     }
+    
+    /**
+     * 发送消息
+     * @param msg
+     * @return
+     */
+    public boolean send(Message msg){
+    	if(null==this.appId){
+    		logger.error("请使用setOptions()方法设置appId和appSecret");
+    		return false;
+    	}
+    	String accesstoken = this.getAccessToken(this.appId,this.appSecret);
+    	String json = "";
+    	switch (MessageType.valueOf(msg.getMsgType())) {
+			case image:
+				json = this.getSend4Image(msg);
+				break;
+			case video:
+				json = this.getSend4Video(msg);
+				break;
+			case voice:
+				json = this.getSend4Voice(msg);
+				break;
+			case location:
+				break;
+			case link:
+				break;
+			case text:
+				json = this.getSend4Text(msg);
+			default:
+				break;
+		}
+    	
+    	logger.debug("acctoken:"+accesstoken+"/"+json);
+    	
+    	sendCustomMsg(accesstoken,json);
+    	return false;
+    }
+    
     
     public Message parse(InputStream in) {
         Message msg = new Message();
@@ -171,7 +219,8 @@ public class Wechat {
             });  
             //2. 将三个参数字符串拼接成一个字符串进行sha1加密  
             String temp = SHA1(list.get(0) + list.get(1) + list.get(2));  
-            return temp.equals(signature);
+            logger.debug(temp+"/"+signature);
+            return temp.equalsIgnoreCase(signature);
     }
 
     /**
@@ -197,9 +246,24 @@ public class Wechat {
     				hs = hs + stmp;
     		}
     		return hs.toUpperCase();
+            
+    		//以下算法结果同上
+//            int len = b.length;  
+//            StringBuilder buf = new StringBuilder(len * 2);  
+//            // 把密文转换成十六进制的字符串形式  
+//            char[] HEX_DIGITS = {'0', '1', '2', '3', '4', '5',  
+//                    '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'}; 
+//            for (int j = 0; j < len; j++) {  
+//                buf.append(HEX_DIGITS[(b[j] >> 4) & 0x0f]);  
+//                buf.append(HEX_DIGITS[b[j] & 0x0f]);  
+//            }  
+//            return buf.toString().toUpperCase(); 
+            
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
+        
+
     }
     
     /**
@@ -208,7 +272,7 @@ public class Wechat {
      */
     public String getAccessToken(String appid,String secret) {
 		String url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid="+appid+"&secret="+secret;
-		client.sendGet(url);
+		client.send(url,HttpClient.METHOD.GET);
 		String content = client.getContent();
 		logger.debug(content);
 		client.close();
@@ -233,7 +297,7 @@ public class Wechat {
      */
     public boolean sendCustomMsg(String accessToken,String json) {
     	String url="https://api.weixin.qq.com/cgi-bin/message/custom/send?access_token="+accessToken;
-    	client.sendPost(url,json);
+    	client.send(url,HttpClient.METHOD.POST,json);
     	String content = client.getContent();
 		logger.debug(content);
 		client.close();
@@ -242,7 +306,7 @@ public class Wechat {
     }
 
 	
-	public String getReplay4Text(Message msg) {
+	public String getRepy4Text(Message msg) {
         StringBuilder xml = new StringBuilder();
         xml.append("<xml>");
 		xml.append("<ToUserName><![CDATA[").append(msg.getToUserName()).append("]]></ToUserName>");
@@ -254,7 +318,7 @@ public class Wechat {
         return xml.toString();
 	}
 	
-	public String getReplay4Image(Message msg) {
+	public String getReply4Image(Message msg) {
         StringBuilder xml = new StringBuilder();
         xml.append("<xml>");
 		xml.append("<ToUserName><![CDATA[").append(msg.getToUserName()).append("]]></ToUserName>");
@@ -266,7 +330,7 @@ public class Wechat {
         return xml.toString();
 	}
 	
-	public String getReplay4Voice(Message msg) {
+	public String getReply4Voice(Message msg) {
         StringBuilder xml = new StringBuilder();
         xml.append("<xml>");
 		xml.append("<ToUserName><![CDATA[").append(msg.getToUserName()).append("]]></ToUserName>");
@@ -278,7 +342,7 @@ public class Wechat {
         return xml.toString();
 	}
 	
-	public String getReplay4Video(Message msg) {
+	public String getReply4Video(Message msg) {
         StringBuilder xml = new StringBuilder();
         xml.append("<xml>");
 		xml.append("<ToUserName><![CDATA[").append(msg.getToUserName()).append("]]></ToUserName>");
@@ -290,7 +354,7 @@ public class Wechat {
         return xml.toString();
 	}
 	
-	public String getReplay4Music(Message msg) {
+	public String getReply4Music(Message msg) {
         StringBuilder xml = new StringBuilder();
         xml.append("<xml>");
 		xml.append("<ToUserName><![CDATA[").append(msg.getToUserName()).append("]]></ToUserName>");
@@ -308,7 +372,7 @@ public class Wechat {
 	}
 	
 	
-	public String getReplay4News(Message msg) {
+	public String getReply4News(Message msg) {
         StringBuilder xml = new StringBuilder();
         xml.append("<xml>");
 		xml.append("<ToUserName><![CDATA[").append(msg.getToUserName()).append("]]></ToUserName>");
@@ -389,7 +453,7 @@ public class Wechat {
 	        return json.toString();
 	}
 
-	public String getReplay4Xml(Message msg) {
+	public String getReply4Xml(Message msg) {
         List<Message> articles = msg.getArticles();
         String xml = "<xml>";
         Field[] fields = msg.getClass().getDeclaredFields();
