@@ -23,9 +23,14 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -43,6 +48,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+
 /**
  *
  * @author lyun@nashihou.cn
@@ -50,12 +56,13 @@ import org.xml.sax.SAXException;
 public class Wechat {
     private Logger logger = LoggerFactory.getLogger(Wechat.class);
     
-    private HttpClient client = new HttpClient();
-    
     private String appId;
     
     private String appSecret;
     
+    private String _accesstoken;
+	private Date _accesstoken_date;
+	
     public void setOptions(String appId,String appSecret){
     	this.appId = appId;
     	this.appSecret = appSecret;
@@ -104,7 +111,9 @@ public class Wechat {
     		logger.error("请使用setOptions()方法设置appId和appSecret");
     		return false;
     	}
+    	 
     	String accesstoken = this.getAccessToken(this.appId,this.appSecret);
+    	
     	String json = "";
     	switch (MessageType.valueOf(msg.getMsgType())) {
 			case image:
@@ -134,8 +143,8 @@ public class Wechat {
     
     
     public Message parse(InputStream in) {
-        Message msg = new Message();
-        Field[] fields = msg.getClass().getDeclaredFields();
+        Message msg = null;
+        
         try {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             DocumentBuilder db = dbf.newDocumentBuilder();
@@ -148,6 +157,8 @@ public class Wechat {
             NodeList childNodes = xml.getChildNodes();
             logger.debug(""+childNodes.getLength());
             
+            msg = new Message();
+            Field[] fields = msg.getClass().getDeclaredFields();
             for (int i = 0; i < childNodes.getLength(); i++) {
                 Node el = childNodes.item(i);
                 logger.debug(i+":"+el.getNodeName()+":"+el.getTextContent());
@@ -271,22 +282,34 @@ public class Wechat {
      * @return
      */
     public String getAccessToken(String appid,String secret) {
-		String url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid="+appid+"&secret="+secret;
+    	
+    	if(_accesstoken_date==null){
+    		_accesstoken_date = new Date();
+    	}
+    	
+    	Date now  =new Date();
+    	long delay = now.getTime() - _accesstoken_date.getTime();
+    	if(_accesstoken!=null &&  delay<=5000000){
+    		return _accesstoken;
+    	}
+    	
+    	_accesstoken_date = now;
+    	HttpClient client = new HttpClient();
+    	String url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid="+appid+"&secret="+secret;
 		client.send(url,HttpClient.METHOD.GET);
 		String content = client.getContent();
 		logger.debug(content);
 		client.close();
 		
 		//TODO 解析json 获取token信息
-		String accessToken = "";
 		String regex = "\"access_token\":\"([^\"]+)\"";
 		  Pattern p = Pattern.compile(regex);
 		  Matcher m = p.matcher(content);
 		  if(m.find()){
-			  accessToken = m.group(1);
+			  _accesstoken = m.group(1);
 		  }
     	
-    	return accessToken;
+    	return _accesstoken;
     }
     
     /**
@@ -296,6 +319,7 @@ public class Wechat {
      * @return
      */
     public boolean sendCustomMsg(String accessToken,String json) {
+    	HttpClient client = new HttpClient();
     	String url="https://api.weixin.qq.com/cgi-bin/message/custom/send?access_token="+accessToken;
     	client.send(url,HttpClient.METHOD.POST,json);
     	String content = client.getContent();

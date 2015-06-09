@@ -20,37 +20,46 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.Map;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSession;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
 *
 * @author lyun@nashihou.cn
 */
 public class HttpClient {
+	private static Logger logger = LoggerFactory.getLogger(HttpClient.class);
 	
 	public enum METHOD {POST,GET}
 	
 	private HttpURLConnection urlConnection = null;
 
-	
-	HostnameVerifier hv = new HostnameVerifier() {
-		@Override
-		public boolean verify(String urlHostName, SSLSession session) {
-			System.out.println("Warning: URL Host: " + urlHostName + " vs. "
-					+ session.getPeerHost());
-			return true;
-		}
-	};
-	    
+	private String _content;
+	/*
+	static {
+		HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier() {
+			@Override
+			public boolean verify(String urlHostName, SSLSession session) {
+				System.out.println("Warning: URL Host: " + urlHostName + " vs. "
+						+ session.getPeerHost());
+				return true;
+			}
+		});  
+	}*/
+
 	public boolean send(String urlString, METHOD method){
 		return this.send(urlString,method,null);
 	}
@@ -85,6 +94,7 @@ public class HttpClient {
 	 */
 	public boolean send(String urlString, METHOD method,
 			Map<String, String> parameters, Map<String, String> propertys,byte[] data) {
+		
 		StringBuffer param = new StringBuffer();
 		String method_str = "GET";
 		if(null != parameters){
@@ -109,36 +119,47 @@ public class HttpClient {
 
 		}
 		
-		
 		try {
+			logger.debug("url:"+urlString);
 			URL url = new URL(urlString);
-			urlConnection = (HttpURLConnection) url.openConnection();
+			if(urlString.startsWith("https://")){
+				urlConnection = (HttpsURLConnection)url.openConnection();
+			} else {
+				urlConnection = (HttpURLConnection)url.openConnection();
+			}
 			urlConnection.setRequestMethod(method_str);
 			urlConnection.setDoOutput(true);
 			urlConnection.setDoInput(true);
 			urlConnection.setUseCaches(false);
 			urlConnection.setInstanceFollowRedirects(true);
-			urlConnection.setRequestProperty("Accept", "application/json"); // 设置接收数据的格式
-			urlConnection.setRequestProperty("Content-Type", "application/json"); // 设置发送数据的格式
+			
+			urlConnection.setRequestProperty("Accept", "*/*");
+			urlConnection.setRequestProperty("Content-Type", "*/*");
+
+			urlConnection.setRequestProperty("connection", "Keep-Alive");
+			
 			if (propertys != null){
 				for (String key : propertys.keySet()) {
 					urlConnection.addRequestProperty(key, propertys.get(key));
 				}
 			}
+
+			OutputStream out = urlConnection.getOutputStream();
 			
-			if (method==METHOD.POST) {
-				if(null != param){
-					urlConnection.getOutputStream().write(param.toString().getBytes("UTF-8"));
-				}
-				if(null != data){
-					urlConnection.getOutputStream().write(data);
-				}
-				urlConnection.getOutputStream().flush();
-				urlConnection.getOutputStream().close();
+			if(null != param){
+				out.write(param.toString().getBytes("UTF-8"));
+			}
+			if(null != data){
+				out.write(data);
 			}
 			
+			out.flush();
+			out.close();
+			
+			_content = getContent();
+			
 			return true;
-					
+			
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -157,8 +178,15 @@ public class HttpClient {
 	}
 
 	public String getContent() {
+		if(_content != null){
+			return _content;
+		}
 		try {
 			InputStream in = urlConnection.getInputStream();
+			if(in.available()<=0){
+				logger.debug("没有返回值");
+				return null;
+			}
 			BufferedReader bufferedReader = new BufferedReader(
 					new InputStreamReader(in));
 			StringBuffer temp = new StringBuffer();
@@ -171,10 +199,11 @@ public class HttpClient {
 			bufferedReader.close();
 
 			String ecod = urlConnection.getContentEncoding();
-			if (ecod == null)
+			if (ecod == null){
 				ecod = "UTF-8";
-			String content = new String(temp.toString().getBytes(), ecod);
-			return content;
+			}
+			_content = new String(temp.toString().getBytes(), ecod);
+			return _content;
 		} catch (UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

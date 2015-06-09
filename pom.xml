@@ -6,6 +6,6 @@
         <artifactId>NOffice</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
-    <artifactId>NOffice.Core.Wechat</artifactId>
+    <artifactId>wechat-java-sdk</artifactId>
     <packaging>jar</packaging>
 </project>
