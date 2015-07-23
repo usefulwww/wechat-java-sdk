@@ -330,7 +330,7 @@ public class Wechat {
     }
 
 	
-	public String getRepy4Text(Message msg) {
+	public String getReply4Text(Message msg) {
         StringBuilder xml = new StringBuilder();
         xml.append("<xml>");
 		xml.append("<ToUserName><![CDATA[").append(msg.getToUserName()).append("]]></ToUserName>");
@@ -403,6 +403,7 @@ public class Wechat {
 		xml.append("<FromUserName><![CDATA[").append(msg.getFromUserName()).append("]]></FromUserName>");
 		xml.append("<CreateTime>").append(msg.getCreateTime()).append("</CreateTime>");
 		xml.append("<MsgType><![CDATA[news]]></MsgType>");
+		xml.append("<ArticleCount>1</ArticleCount>");
 		List<Message> articles = msg.getArticles();
 		if(articles !=null && articles.size()>0) {
         	xml .append("<Articles>");
