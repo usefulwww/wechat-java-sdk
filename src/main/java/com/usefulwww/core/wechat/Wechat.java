@@ -18,20 +18,25 @@ package com.usefulwww.core.wechat;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -62,6 +67,9 @@ public class Wechat {
     
     private String _accesstoken;
 	private Date _accesstoken_date;
+	
+	private String _jsticket;
+	private Date _jsticket_date;
 	
     public void setOptions(String appId,String appSecret){
     	this.appId = appId;
@@ -95,7 +103,7 @@ public class Wechat {
     public String reply(String echostr,InputStream in,CallBack callback) {
         // 处理接收消息    
         Message msg = new Message();
-        msg = parse(in);
+        msg = WechatUtil.parse(in);
 
         return reply(echostr,msg,callback);
         
@@ -117,20 +125,20 @@ public class Wechat {
     	String json = "";
     	switch (MessageType.valueOf(msg.getMsgType())) {
 			case image:
-				json = this.getSend4Image(msg);
+				json = WechatUtil.getSend4Image(msg);
 				break;
 			case video:
-				json = this.getSend4Video(msg);
+				json = WechatUtil.getSend4Video(msg);
 				break;
 			case voice:
-				json = this.getSend4Voice(msg);
+				json = WechatUtil.getSend4Voice(msg);
 				break;
 			case location:
 				break;
 			case link:
 				break;
 			case text:
-				json = this.getSend4Text(msg);
+				json = WechatUtil.getSend4Text(msg);
 			default:
 				break;
 		}
@@ -141,70 +149,6 @@ public class Wechat {
     	return false;
     }
     
-    
-    public Message parse(InputStream in) {
-        Message msg = null;
-        
-        try {
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            DocumentBuilder db = dbf.newDocumentBuilder();
-            Document document = db.parse(in);
-            logger.debug(document.toString());
-            NodeList xmls = document.getElementsByTagName("xml");
-			Element xml = (Element) xmls.item(0);
-			logger.debug(xml.getNodeName());
-			
-            NodeList childNodes = xml.getChildNodes();
-            logger.debug(""+childNodes.getLength());
-            
-            msg = new Message();
-            Field[] fields = msg.getClass().getDeclaredFields();
-            for (int i = 0; i < childNodes.getLength(); i++) {
-                Node el = childNodes.item(i);
-                logger.debug(i+":"+el.getNodeName()+":"+el.getTextContent());
-                for (Field f : fields) {
-                    if (f.getName().equals(el.getNodeName())) {
-                    	
-                        try {
-                        	Method m = msg.getClass().getDeclaredMethod("set"+f.getName(),f.getType());
-                        	if(m!=null) {
-	                            if (f.getType() == java.lang.Long.class) {
-	                            	m.invoke(msg, Long.parseLong(el.getTextContent()));
-	                            } else {
-	                            	m.invoke(msg,el.getTextContent());
-	                            }
-                        	}
-                        } catch (IllegalArgumentException ex) {
-                            logger.error(ex.getMessage());
-                            ex.printStackTrace();
-                        } catch (IllegalAccessException ex) {
-                            logger.error(ex.getMessage());
-                            ex.printStackTrace();
-                        } catch (NoSuchMethodException e) {
-							e.printStackTrace();
-						} catch (SecurityException e) {
-							e.printStackTrace();
-						} catch (InvocationTargetException e) {
-							e.printStackTrace();
-						} catch (DOMException e) {
-							e.printStackTrace();
-						}
-                        break;
-                    }
-                }
-            }
-        } catch (ParserConfigurationException e) {
-            logger.error(e.getMessage());
-            e.printStackTrace();
-        } catch (SAXException e) {
-            logger.error(e.getMessage());
-            e.printStackTrace();
-        } catch (IOException e) {
-            logger.error(e.getMessage());
-            e.printStackTrace();
-        }
-        return msg;
-    }
     
     /**
      * 
@@ -229,53 +173,12 @@ public class Wechat {
                 }  
             });  
             //2. 将三个参数字符串拼接成一个字符串进行sha1加密  
-            String temp = SHA1(list.get(0) + list.get(1) + list.get(2));  
+            String temp = WechatUtil.SHA1(list.get(0) + list.get(1) + list.get(2));  
             logger.debug(temp+"/"+signature);
             return temp.equalsIgnoreCase(signature);
     }
 
-    /**
-     *  SHA1 加密
-     * @param str 代加密字符串
-     * @return
-     */
-    public String SHA1(String str) {
-        if (str == null) {
-            return null;
-        }
-        try {
-            MessageDigest messageDigest = MessageDigest.getInstance("SHA1");
-            messageDigest.update(str.getBytes());
-            byte[] b = messageDigest.digest();
-            String hs = "";
-    		String stmp = "";
-    		for (int n = 0; n < b.length; n++) {
-    			stmp = (java.lang.Integer.toHexString(b[n] & 0XFF));
-    			if (stmp.length() == 1)
-    				hs = hs + "0" + stmp;
-    			else
-    				hs = hs + stmp;
-    		}
-    		return hs.toUpperCase();
-            
-    		//以下算法结果同上
-//            int len = b.length;  
-//            StringBuilder buf = new StringBuilder(len * 2);  
-//            // 把密文转换成十六进制的字符串形式  
-//            char[] HEX_DIGITS = {'0', '1', '2', '3', '4', '5',  
-//                    '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'}; 
-//            for (int j = 0; j < len; j++) {  
-//                buf.append(HEX_DIGITS[(b[j] >> 4) & 0x0f]);  
-//                buf.append(HEX_DIGITS[b[j] & 0x0f]);  
-//            }  
-//            return buf.toString().toUpperCase(); 
-            
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
-        
-
-    }
+   
     
     /**
      * 获取 accesstoken
@@ -311,6 +214,166 @@ public class Wechat {
     	
     	return _accesstoken;
     }
+    public String getJsTicket(String appid,String secret){
+    	if(_jsticket_date == null) {
+    		_jsticket_date = new Date();
+    	}
+    	
+    	Date now = new Date();
+    	
+    	long delay = now.getTime() - _jsticket_date.getTime();
+    	if(_jsticket!=null && delay <=5000000){
+    		return _jsticket;
+    	}
+    	
+    	_jsticket_date = now;
+    	
+    	String accessToken = this.getAccessToken(appid, secret);
+    	HttpClient client = new HttpClient();
+    	String url = "https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token="+accessToken+"&type=jsapi";
+		client.send(url,HttpClient.METHOD.GET);
+		String content = client.getContent();
+		logger.debug(content);
+		client.close();
+		
+		// TODO 解析json 获取ticket信息
+		String regex = "\"ticket\":\"([^\"]+)\"";
+		Pattern p = Pattern.compile(regex);
+		Matcher m = p.matcher(content);
+		if (m.find()) {
+			_jsticket = m.group(1);
+		}
+
+		return _jsticket;
+    }
+    
+    public String getJsSign(Map<String,String> map){
+    	ArrayList<String> list = new ArrayList<String>();
+        for(Map.Entry<String,String> entry:map.entrySet()){
+            if(entry.getValue()!=""){
+                list.add(entry.getKey() + "=" + entry.getValue() + "&");
+            }
+        }
+        int size = list.size();
+        String [] arrayToSort = list.toArray(new String[size]);
+        Arrays.sort(arrayToSort, String.CASE_INSENSITIVE_ORDER);
+        StringBuilder sb = new StringBuilder();
+        for(int i = 0; i < size; i ++) {
+            sb.append(arrayToSort[i]);
+        }
+        String result = sb.toString().substring(0,sb.length()-1);
+        logger.debug(result);
+        result = WechatUtil.SHA1(result);
+        return result.toLowerCase();
+    }
+    
+    /**
+     * 
+     * @param appid
+     * @param url
+     * @param scope snsapi_base/snsapi_userinfo
+     * @param state
+     * @return
+     * @throws UnsupportedEncodingException 
+     */
+    public String getOAuthUrl(String url,String scope,String state,String appid){
+    	try {
+			url = URLEncoder.encode(url,"UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	return "https://open.weixin.qq.com/connect/oauth2/authorize?appid="+appid+"&redirect_uri="+ url +"&response_type=code&scope="+scope+"&state="+state+"#wechat_redirect";
+    }
+    
+    public Map<String,String> getOAuthAccessToken(String code,String appid,String appSecret){
+    	String url="https://api.weixin.qq.com/sns/oauth2/access_token?appid="+appid+"&secret="+appSecret+"&code="+code+"&grant_type=authorization_code";
+    	/*var json={
+    		   "access_token":"ACCESS_TOKEN",
+    		   "expires_in":7200,
+    		   "refresh_token":"REFRESH_TOKEN",
+    		   "openid":"OPENID",
+    		   "scope":"SCOPE",
+    		   "unionid": "o6_bmasdasdsad6_2sgVt7hMZOPfL"
+    		}*/
+    	HttpClient client = new HttpClient();
+    	client.send(url, HttpClient.METHOD.GET);
+    	String content = client.getContent();
+    	client.close();
+    	
+    	Map<String,String> map = new HashMap<String, String>();
+    	
+    	String regex = "\"([^\"]+)\":\"([^\"]+)\"";
+		Pattern p = Pattern.compile(regex);
+		Matcher m = p.matcher(content);
+		while (m.find()) {
+			map.put( m.group(1),m.group(2));
+		}
+    	
+    	return map;
+    }
+    
+    /**
+     * 签名算法
+     * @param o 要参与签名的数据对象
+     * @return 签名
+     * @throws IllegalAccessException
+     */
+	public  String getPaySign(Map<String,String> map,String key){
+        ArrayList<String> list = new ArrayList<String>();
+        for(Map.Entry<String,String> entry:map.entrySet()){
+            if(entry.getValue()!=""){
+                list.add(entry.getKey() + "=" + entry.getValue() + "&");
+            }
+        }
+        int size = list.size();
+        String [] arrayToSort = list.toArray(new String[size]);
+        Arrays.sort(arrayToSort, String.CASE_INSENSITIVE_ORDER);
+        StringBuilder sb = new StringBuilder();
+        for(int i = 0; i < size; i ++) {
+            sb.append(arrayToSort[i]);
+        }
+        String result = sb.toString();
+        result += "key=" + key;
+        //logger.debug("Sign Before MD5:" + result);
+        result = WechatUtil.MD5(result).toUpperCase();
+        //logger.debug("Sign Result:" + result);
+        return result;
+    }
+
+  
+    
+    public Map<String, String> unifiedorder(Map<String,String> map){
+    	StringBuilder post =new StringBuilder();
+    	post.append("<xml>");
+    	for(String key :map.keySet()){
+    		post.append("<").append(key).append(">").append(map.get(key)).append("</").append(key).append(">");
+    	}
+    	post.append("</xml>");
+    	
+    	String url = "https://api.mch.weixin.qq.com/pay/unifiedorder";
+    	
+    	HttpClient client = new HttpClient();
+    	
+    	boolean success = client.send(url, HttpClient.METHOD.POST, post.toString());
+    	
+    	if(success) {
+    		try {
+    			String content = client.getContent();
+    			logger.debug(content);
+				return WechatUtil.getMapFromXML(content);
+			} catch (ParserConfigurationException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (SAXException e) {
+				e.printStackTrace();
+			}
+    	}
+    	
+    	return null;
+    }
+    
     
     /**
      * 发送客服信息
@@ -330,195 +393,5 @@ public class Wechat {
     }
 
 	
-	public String getReply4Text(Message msg) {
-        StringBuilder xml = new StringBuilder();
-        xml.append("<xml>");
-		xml.append("<ToUserName><![CDATA[").append(msg.getToUserName()).append("]]></ToUserName>");
-		xml.append("<FromUserName><![CDATA[").append(msg.getFromUserName()).append("]]></FromUserName>");
-		xml.append("<CreateTime>").append(msg.getCreateTime()).append("</CreateTime>");
-		xml.append("<MsgType><![CDATA[text]]></MsgType>");
-		xml.append("<Content><![CDATA[").append(msg.getContent()).append("]]></Content>");
-        xml.append("</xml>");
-        return xml.toString();
-	}
-	
-	public String getReply4Image(Message msg) {
-        StringBuilder xml = new StringBuilder();
-        xml.append("<xml>");
-		xml.append("<ToUserName><![CDATA[").append(msg.getToUserName()).append("]]></ToUserName>");
-		xml.append("<FromUserName><![CDATA[").append(msg.getFromUserName()).append("]]></FromUserName>");
-		xml.append("<CreateTime>").append(msg.getCreateTime()).append("</CreateTime>");
-		xml.append("<MsgType><![CDATA[image]]></MsgType>");
-		xml.append("<Image><MediaId><![CDATA[").append(msg.getMediaId()).append("]]></MediaId></Image>");
-        xml.append("</xml>");
-        return xml.toString();
-	}
-	
-	public String getReply4Voice(Message msg) {
-        StringBuilder xml = new StringBuilder();
-        xml.append("<xml>");
-		xml.append("<ToUserName><![CDATA[").append(msg.getToUserName()).append("]]></ToUserName>");
-		xml.append("<FromUserName><![CDATA[").append(msg.getFromUserName()).append("]]></FromUserName>");
-		xml.append("<CreateTime>").append(msg.getCreateTime()).append("</CreateTime>");
-		xml.append("<MsgType><![CDATA[voice]]></MsgType>");
-		xml.append("<Voice><MediaId><![CDATA[").append(msg.getMediaId()).append("]]></MediaId></Voice>");
-        xml.append("</xml>");
-        return xml.toString();
-	}
-	
-	public String getReply4Video(Message msg) {
-        StringBuilder xml = new StringBuilder();
-        xml.append("<xml>");
-		xml.append("<ToUserName><![CDATA[").append(msg.getToUserName()).append("]]></ToUserName>");
-		xml.append("<FromUserName><![CDATA[").append(msg.getFromUserName()).append("]]></FromUserName>");
-		xml.append("<CreateTime>").append(msg.getCreateTime()).append("</CreateTime>");
-		xml.append("<MsgType><![CDATA[video]]></MsgType>");
-		xml.append("<Video><MediaId><![CDATA[").append(msg.getMediaId()).append("]]></MediaId></Video>");
-        xml.append("</xml>");
-        return xml.toString();
-	}
-	
-	public String getReply4Music(Message msg) {
-        StringBuilder xml = new StringBuilder();
-        xml.append("<xml>");
-		xml.append("<ToUserName><![CDATA[").append(msg.getToUserName()).append("]]></ToUserName>");
-		xml.append("<FromUserName><![CDATA[").append(msg.getFromUserName()).append("]]></FromUserName>");
-		xml.append("<CreateTime>").append(msg.getCreateTime()).append("</CreateTime>");
-		xml.append("<MsgType><![CDATA[music]]></MsgType>");
-		xml.append("<Music><Title><![CDATA[")
-		.append(msg.getTitle()).append("]]></Title><Description><![CDATA[")
-		.append(msg.getDescription()).append("]]></Description><MusicUrl><![CDATA[")
-		.append(msg.getMusicUrl()).append("]]></MusicUrl><HQMusicUrl><![CDATA[")
-		.append(msg.getHQMusicUrl()).append("]]></HQMusicUrl><ThumbMediaId><![CDATA[")
-		.append(msg.getMediaId()).append("]]></ThumbMediaId></Music>");
-        xml.append("</xml>");
-        return xml.toString();
-	}
-	
-	
-	public String getReply4News(Message msg) {
-        StringBuilder xml = new StringBuilder();
-        xml.append("<xml>");
-		xml.append("<ToUserName><![CDATA[").append(msg.getToUserName()).append("]]></ToUserName>");
-		xml.append("<FromUserName><![CDATA[").append(msg.getFromUserName()).append("]]></FromUserName>");
-		xml.append("<CreateTime>").append(msg.getCreateTime()).append("</CreateTime>");
-		xml.append("<MsgType><![CDATA[news]]></MsgType>");
-		xml.append("<ArticleCount>1</ArticleCount>");
-		List<Message> articles = msg.getArticles();
-		if(articles !=null && articles.size()>0) {
-        	xml .append("<Articles>");
-        	for(Message it : articles) {
-				xml.append( "<item>");
-				xml.append("<Title><![CDATA["+it.getTitle()+"]]></Title>");
-				xml.append("<Description><![CDATA["+it.getDescription()+"]]></Description>");
-				xml.append("<PicUrl><![CDATA["+it.getPicUrl()+"]]></PicUrl>");
-				xml.append("<Url><![CDATA["+it.getUrl()+"]]></Url>");
-				xml.append("</item>");
-        	}
-        	xml.append("</Articles>");
-        }
-        xml.append("</xml>");
-        return xml.toString();
-	}
-	
-	public String getSend4Text(Message msg) {
-		 StringBuilder json = new StringBuilder();
-	        json.append("{\"touser\":\"").append(msg.getToUserName()).append("\",\"msgtype\":\"text\",\"text\":{\"content\":\"").append(msg.getContent()).append("\"}}");
-	        return json.toString();
-	}
-
-	
-	public String getSend4Image(Message msg) {
-		 StringBuilder json = new StringBuilder();
-	        json.append("{\"touser\":\"").append(msg.getToUserName()).append("\",\"msgtype\":\"image\",\"image\":{\"media_id\":\"").append(msg.getMediaId()).append("\"}}");
-	        return json.toString();
-	}
-	
-	
-	public String getSend4Voice(Message msg) {
-		 StringBuilder json = new StringBuilder();
-	        json.append("{\"touser\":\"").append(msg.getToUserName()).append("\",\"msgtype\":\"voice\",\"voice\":{\"media_id\":\"").append(msg.getMediaId()).append("\"}}");
-	        return json.toString();
-	}
-	
-	public String getSend4Video(Message msg) {
-		 StringBuilder json = new StringBuilder();
-	        json.append("{\"touser\":\"").append(msg.getToUserName()).append("\",\"msgtype\":\"video\",\"video\":{\"media_id\":\"").append(msg.getMediaId()).append("\",\"thumb_media_id\":\"").append(msg.getThumbMediaId()).append("\",\"title\":\"").append(msg.getTitle()).append("\",\"description\":\"").append(msg.getDescription()).append("\"}}");
-	        return json.toString();
-	}
-	
-	public String getSend4Music(Message msg) {
-		 StringBuilder json = new StringBuilder();
-	        json.append("{\"touser\":\"").append(msg.getToUserName())
-	        .append("\",\"msgtype\":\"music\",\"music\":{\"thumb_media_id\":\"")
-	        .append(msg.getThumbMediaId())
-	        .append("\",\"musicurl\":\"").append(msg.getMusicUrl())
-	        .append("\",\"hqmusicurl\":\"").append(msg.getHQMusicUrl())
-	        .append("\",\"title\":\"").append(msg.getTitle())
-	        .append("\",\"description\":\"").append(msg.getDescription()).append("\"}}");
-	        return json.toString();
-	}
-	
-	public String getSend4News(Message msg) {
-		 StringBuilder json = new StringBuilder();
-	        json.append("{\"touser\":\"").append(msg.getToUserName())
-	        .append("\",\"msgtype\":\"news\",\"news\":{\"article\":[");
-	        List<Message> articles = msg.getArticles();
-	        for(int i =0;i < articles.size();i++) {
-	        	Message it = articles.get(i);
-	        	json.append("{\"title\":\""+it.getTitle()
-	        			+"\",\"description\":\""+it.getDescription()
-	        			+"\",\"url\":\""+it.getUrl()
-	        			+"\",\"picurl\":\""+it.getPicUrl()+"\"}");
-	        	if(i < articles.size()-1){
-	        		json.append(",");
-	        	}
-	        }
-	        json.append("]}}");
-	        return json.toString();
-	}
-
-	public String getReply4Xml(Message msg) {
-        List<Message> articles = msg.getArticles();
-        String xml = "<xml>";
-        Field[] fields = msg.getClass().getDeclaredFields();
-        for (Field field : fields) {
-        	String val = "";
-            try {
-            	if(field.get(this) == null){
-            		continue;
-            	}
-                if(field.getType() == List.class) {
-                	logger.debug(field.getType().toString());
-                } else if (field.getType() == java.lang.String.class) {
-                    val = "<![CDATA[" + field.get(this).toString() + "]]>";
-                } else if(field.getType() == java.lang.Long.class) {
-                    val = String.valueOf(field.getLong(this));
-                }
-                if(val!=null && "".equals(val) == false){
-                	xml += "<" + field.getName() + ">" + val + "<" + field.getName() + ">";
-                }
-            } catch (IllegalArgumentException ex) {
-               logger.error(ex.getMessage());
-            } catch (IllegalAccessException ex) {
-               logger.error(ex.getMessage());
-            }
-        }
-        if(articles != null && articles.size()>0) {
-        	xml +="<Articles>";
-        	for(Message it : articles) {
-				xml += "<item>";
-				xml += "<Title><![CDATA["+it.getTitle()+"]]></Title>";
-				xml += "<Description><![CDATA["+it.getDescription()+"]]></Description>";
-				xml += "<PicUrl><![CDATA["+it.getPicUrl()+"]]></PicUrl>";
-				xml += "<Url><![CDATA["+it.getUrl()+"]]></Url>";
-				xml += "</item>";
-        	}
-        	xml +="</Articles>";
-        }
-        xml += "</xml>";
-        return xml;
-    }
-
 
 }

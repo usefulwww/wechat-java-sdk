@@ -34,7 +34,7 @@ public class WechatTest extends TestCase{
 						replay.setToUserName(send.getFromUserName());
 						replay.setContent("感谢您关注");
 						replay.setCreateTime(new Date().getTime());
-						return wechat.getReply4Text(replay);
+						return WechatUtil.getReply4Text(replay);
 					}
 					
 					return MessageType.event.toString();

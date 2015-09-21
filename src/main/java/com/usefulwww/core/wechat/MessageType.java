@@ -37,10 +37,7 @@ public enum MessageType {
 	voice("voice"), 
 	location("location"), 
 	link("link"),
-	/**
-	 * 图文
-	 */
-	news("news"),
+	
 	
 	event("event"),
 	/**
