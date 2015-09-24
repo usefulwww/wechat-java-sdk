@@ -26,12 +26,16 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
-import java.net.URLConnection;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.Map;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,17 +52,6 @@ public class HttpClient {
 	private HttpURLConnection urlConnection = null;
 
 	private String _content;
-	/*
-	static {
-		HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier() {
-			@Override
-			public boolean verify(String urlHostName, SSLSession session) {
-				System.out.println("Warning: URL Host: " + urlHostName + " vs. "
-						+ session.getPeerHost());
-				return true;
-			}
-		});  
-	}*/
 
 	public boolean send(String urlString, METHOD method){
 		return this.send(urlString,method,null);
@@ -123,7 +116,15 @@ public class HttpClient {
 			logger.debug("url:"+urlString);
 			URL url = new URL(urlString);
 			if(urlString.startsWith("https://")){
-				urlConnection = (HttpsURLConnection)url.openConnection();
+				HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
+				
+				SSLContext sc = SSLContext.getInstance("SSL");
+		        sc.init(null, new TrustManager[] { new TrustAnyTrustManager() },new java.security.SecureRandom());
+		        conn.setSSLSocketFactory(sc.getSocketFactory());
+		        conn.setHostnameVerifier(new TrustAnyHostnameVerifier());
+		        conn.setDoOutput(true);
+		        
+		        urlConnection = conn;
 			} else {
 				urlConnection = (HttpURLConnection)url.openConnection();
 			}
@@ -221,6 +222,37 @@ public class HttpClient {
 			urlConnection.disconnect();
 
 		return true;
+	}
+	
+	private class TrustAnyTrustManager implements X509TrustManager {
+
+		@Override
+		public void checkClientTrusted(X509Certificate[] chain, String authType)
+				throws CertificateException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void checkServerTrusted(X509Certificate[] chain, String authType)
+				throws CertificateException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public X509Certificate[] getAcceptedIssuers() {
+			// TODO Auto-generated method stub
+			return new X509Certificate[] {};
+		}
+		
+	}
+
+	private class TrustAnyHostnameVerifier implements HostnameVerifier {
+		@Override
+		public boolean verify(String hostname, SSLSession session) {
+			return true;
+		}
 	}
 
 }

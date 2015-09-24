@@ -25,6 +25,12 @@ public enum MessageType {
 	 * 文本消息
 	 */
 	text("text"),
+	
+	/**
+	 * 图文
+	 */
+	news("news"),
+	
 	/**
 	 * 图片消息
 	 */

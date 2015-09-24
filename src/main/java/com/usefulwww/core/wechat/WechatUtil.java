@@ -350,7 +350,7 @@ public abstract class WechatUtil {
 	public static String getSend4News(Message msg) {
 		 StringBuilder json = new StringBuilder();
 	        json.append("{\"touser\":\"").append(msg.getToUserName())
-	        .append("\",\"msgtype\":\"news\",\"news\":{\"article\":[");
+	        .append("\",\"msgtype\":\"news\",\"news\":{\"articles\":[");
 	        List<Message> articles = msg.getArticles();
 	        for(int i =0;i < articles.size();i++) {
 	        	Message it = articles.get(i);
