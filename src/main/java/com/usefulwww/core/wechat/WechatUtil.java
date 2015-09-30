@@ -174,7 +174,6 @@ public abstract class WechatUtil {
             Field[] fields = msg.getClass().getDeclaredFields();
             for (int i = 0; i < childNodes.getLength(); i++) {
                 Node el = childNodes.item(i);
-                logger.debug(i+":"+el.getNodeName()+":"+el.getTextContent());
                 for (Field f : fields) {
                     if (f.getName().equals(el.getNodeName())) {
                     	

@@ -53,6 +53,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import com.usefulwww.core.wechat.HttpClient.METHOD;
+
 
 /**
  *
@@ -139,6 +141,9 @@ public class Wechat {
 				break;
 			case text:
 				json = WechatUtil.getSend4Text(msg);
+				break;
+			case news:
+				json = WechatUtil.getSend4News(msg);
 			default:
 				break;
 		}
@@ -233,6 +238,7 @@ public class Wechat {
     	String url = "https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token="+accessToken+"&type=jsapi";
 		client.send(url,HttpClient.METHOD.GET);
 		String content = client.getContent();
+		System.out.println("wechat返回内容：   "+content);
 		logger.debug(content);
 		client.close();
 		
@@ -391,7 +397,18 @@ public class Wechat {
 		//TODO 验证是否发送完毕
     	return false;
     }
-
-	
-
+    
+    /**
+     * 菜单创建
+     * @param accessToken
+     * @param json
+     * @return
+     */
+	public boolean createMenu(String accessToken,String json){
+		HttpClient client = new HttpClient();
+		String url = "https://api.weixin.qq.com/cgi-bin/menu/create?access_token="+accessToken;
+		boolean isOk = client.send(url, HttpClient.METHOD.POST,json);
+		System.out.println(client.getContent());
+		return isOk;
+	}
 }
