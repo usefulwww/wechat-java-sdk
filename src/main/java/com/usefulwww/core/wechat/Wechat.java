@@ -44,6 +44,8 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import net.sf.json.JSONObject;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.DOMException;
@@ -408,7 +410,53 @@ public class Wechat {
 		HttpClient client = new HttpClient();
 		String url = "https://api.weixin.qq.com/cgi-bin/menu/create?access_token="+accessToken;
 		boolean isOk = client.send(url, HttpClient.METHOD.POST,json);
-		System.out.println(client.getContent());
 		return isOk;
 	}
+	
+	/**
+	 * 获取用户基本信息
+	 * @param accessToken
+	 * @param openId
+	 * @return
+	 * @throws ParseException 
+	 */
+	public User getUserInfo(String appid,String appsecret,String openId){
+		String accessToken = this.getAccessToken(appid, appsecret);
+		HttpClient client = new HttpClient();
+		String url = "https://api.weixin.qq.com/cgi-bin/user/info?access_token="+accessToken+"&openid="+openId+"&lang=zh_CN";
+		client.send(url, HttpClient.METHOD.GET);
+		//解析json
+		String content = client.getContent();
+		
+		Map<String,String> map = new HashMap<String, String>();
+    	
+    	String regex = "\"([^\"]+)\":\"([^\"]+)\"";
+		Pattern p = Pattern.compile(regex);
+		Matcher m = p.matcher(content);
+		while (m.find()) {
+			map.put( m.group(1),m.group(2));
+		}
+		
+		User user = new User();
+		user.setSubscribe(map.get("subscribe"));
+		user.setOpenId(map.get("openid"));
+		user.setNickName(map.get("nickname"));
+		user.setSex(map.get("sex"));
+		user.setLanguage(map.get("language"));
+		user.setCity(map.get("city"));
+		user.setProvince(map.get("province"));
+		user.setCountry(map.get("country"));
+		user.setHeadImgUrl(map.get("headImgUrl"));
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		try {
+			user.setSubscribeTime(sdf.parse(map.get("subscribe_time")));
+		} catch (ParseException e) {
+		}
+		user.setRemark(map.get("remark"));
+		user.setGroupid(map.get("groupid"));
+		
+		return user;
+	}
+	
+	
 }

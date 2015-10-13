@@ -19,6 +19,11 @@ public class User {
 	private String lastContent; //最后回复的正文',
 	private String lastMsg; //最后回复消息XML内容',
 	private Date lastTime; //最后回复时间',
+	
+	private String subscribe;
+	private String remark;
+	private String groupid;
+	
 	public String getId() {
 		return id;
 	}
@@ -115,6 +120,25 @@ public class User {
 	public void setLastTime(Date lastTime) {
 		this.lastTime = lastTime;
 	}
-
+	
+	
+	public String getSubscribe() {
+		return subscribe;
+	}
+	public void setSubscribe(String subscribe) {
+		this.subscribe = subscribe;
+	}
+	public String getRemark() {
+		return remark;
+	}
+	public void setRemark(String remark) {
+		this.remark = remark;
+	}
+	public String getGroupid() {
+		return groupid;
+	}
+	public void setGroupid(String groupid) {
+		this.groupid = groupid;
+	}
 	
 }
