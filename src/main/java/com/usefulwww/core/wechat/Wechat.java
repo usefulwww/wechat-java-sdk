@@ -397,6 +397,44 @@ public class Wechat {
     	return false;
     }
     
+    public boolean createMenu(String accessToken,List<Menu> list) {
+    	String json = "{\"button\":[";
+		String str = "";
+		for (Menu menu : list) {
+			if("click".equals(menu.getType())){
+				if((null == menu.getSub_button() ||  "".equals(menu.getSub_button()))&&"0".equals(menu.getParentId())){
+//				if("0".equals(menu.getParentId())){
+					str += "{\"type\":\"click\",\"name\":\""+menu.getName()+"\",\"key\":\""+menu.getKey()+"\"},";
+				}else if((null != menu.getSub_button() && "".equals(menu.getSub_button())==false)&&"0".equals(menu.getParentId())){
+//				}else{
+					str +=  "{\"name\":\""+menu.getName()+"\",\"sub_button\":[";
+					for (Menu menu1 : list) {
+						if(menu1.getParentId().equals(String.valueOf(menu.getId()))){
+							if("click".equals(menu1.getType())){
+								str += "{\"type\":\"click\",\"name\":\""+menu1.getName()+"\",\"key\":\""+menu1.getKey()+"\"},";
+							}
+							else if("view".equals(menu1.getType())&&"0".equals(menu1.getParentId())==false){
+								String url = menu1.getUrl();
+								str += "{\"type\":\"view\",\"name\":\""+menu1.getName()+"\",\"url\":\""+url+"\"},";
+							}
+						}
+					}
+					str = str.substring(0,str.length()-1);
+					str += "]},";
+				}
+			}else if("view".equals(menu.getType())&&"0".equals(menu.getParentId())){
+				System.out.println("menu: "+menu);
+				String url =menu.getUrl();
+				str += "{\"type\":\"view\",\"name\":\""+menu.getName()+"\",\"url\":\""+url+"\"},";
+			}
+		}
+		str = str.substring(0,str.length()-1);
+		str += "]}";
+		json += str;
+		
+		return createMenu(accessToken,json);
+    }
+    
     /**
      * 菜单创建
      * @param accessToken
