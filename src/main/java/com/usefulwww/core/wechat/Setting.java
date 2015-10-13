@@ -8,6 +8,16 @@ public class Setting {
 	private String appCode;
 
 	private String appSecret;
+	
+	private String appMsgSecret;
+
+	public String getAppMsgSecret() {
+		return appMsgSecret;
+	}
+
+	public void setAppMsgSecret(String appMsgSecret) {
+		this.appMsgSecret = appMsgSecret;
+	}
 
 	private String mchId;
 

@@ -44,8 +44,6 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import net.sf.json.JSONObject;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.DOMException;
@@ -240,7 +238,6 @@ public class Wechat {
     	String url = "https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token="+accessToken+"&type=jsapi";
 		client.send(url,HttpClient.METHOD.GET);
 		String content = client.getContent();
-		System.out.println("wechat返回内容：   "+content);
 		logger.debug(content);
 		client.close();
 		
@@ -341,11 +338,11 @@ public class Wechat {
         for(int i = 0; i < size; i ++) {
             sb.append(arrayToSort[i]);
         }
-        String result = sb.toString();
-        result += "key=" + key;
-        //logger.debug("Sign Before MD5:" + result);
-        result = WechatUtil.MD5(result).toUpperCase();
-        //logger.debug("Sign Result:" + result);
+        String post = sb.toString();
+        post += "key=" + key;
+        logger.debug("Sign Before MD5:" + post);
+        String result = WechatUtil.MD5(post).toUpperCase();
+        logger.debug("Sign Result:" + result);
         return result;
     }
 
