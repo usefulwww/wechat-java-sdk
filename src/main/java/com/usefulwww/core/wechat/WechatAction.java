@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
+
 /**
  * 抽象类，需要继承后实现相应函数
  *
@@ -58,10 +59,10 @@ public abstract class WechatAction {
 	protected abstract long getPayOrderFee(String orderId);
 	
 
-	protected abstract String getRequestRemoteHost();
+	
 	
 
-	public String payPre4H5(String orderId){
+	protected Map<String, String> payPre4H5(String orderId,String clientIP){
 
 		long fee = this.getPayOrderFee(orderId);
 		
@@ -75,32 +76,27 @@ public abstract class WechatAction {
 		params.put("body", getPayOrderSubject(orderId));
 		params.put("out_trade_no", getPayOrderNo(orderId));
 		params.put("total_fee", String.valueOf(fee));
-		params.put("spbill_create_ip", this.getRequestRemoteHost());
+		params.put("spbill_create_ip", clientIP);
 		params.put("notify_url", this.getPayNotifyUrl());
 		params.put("trade_type", "WAP");
-		
-		String sign = wechat.getPaySign(params, set.getMchKey());
-		
-		params.put("sign", sign);
-		
+		params.put("sign", wechat.getPaySign(params, set.getMchKey()));
 		Map<String, String> prepay = wechat.unifiedorder(params);
 		
-		String  timestamp = Long.toString(System.currentTimeMillis() / 1000);
+		String prepay_id = prepay.get("prepay_id");
+
+		Map<String,String> params2 = new HashMap<String, String>();
+		params2.put("appId", set.getAppId());
+		params2.put("timeStamp", Long.toString(System.currentTimeMillis() / 1000));
+		params2.put("nonceStr", WechatUtil.getRandomStringByLength(32));
+		params2.put("package", "prepay_id="+prepay_id);
+		params2.put("signType", "MD5");
+		params2.put("paySign",wechat.getPaySign(params2, set.getMchKey()));
 		
-		StringBuilder json = new StringBuilder();
-		json.append("{\"status\":200,\"message\":\"success!\",\"option\":{\"appId\":\"")
-		.append(params.get("appid"))
-		.append("\",\"timestamp\":\"").append(timestamp)
-		.append("\",\"nonceStr\":\"").append(prepay.get("nonce_str"))
-		.append("\",\"package\":\"prepay_id=").append(prepay.get("prepay_id"))
-		.append("\",\"signType\":\"").append("MD5")
-		.append("\",\"paySign\":\"").append(prepay.get("sign"))
-		.append("\"}}");
+		return params2;
 		
-		return json.toString();
 	}
 	
-	public String payPre4Js(String orderId,String openId){
+	protected Map<String,String> payPre4JS(String orderId,String openId,String clientIP){
 
 		long fee = this.getPayOrderFee(orderId);
 		
@@ -115,33 +111,24 @@ public abstract class WechatAction {
 		params.put("body", getPayOrderSubject(orderId));
 		params.put("out_trade_no", getPayOrderNo(orderId));
 		params.put("total_fee", String.valueOf(fee));
-		params.put("spbill_create_ip", this.getRequestRemoteHost());
+		params.put("spbill_create_ip", clientIP);
 		params.put("notify_url", this.getPayNotifyUrl());
 		params.put("trade_type", "JSAPI");
-		
-		String sign = wechat.getPaySign(params, set.getMchKey());
-		
-		params.put("sign", sign);
-		
+		params.put("sign", wechat.getPaySign(params, set.getMchKey()));
 		Map<String, String> prepay = wechat.unifiedorder(params);
 		
-		String  timestamp = Long.toString(System.currentTimeMillis() / 1000);
-		
-		StringBuilder json = new StringBuilder();
-		json.append("{\"status\":200,\"message\":\"success!\",\"option\":{\"appId\":\"")
-		.append(params.get("appid"))
-		.append("\",\"timestamp\":\"").append(timestamp)
-		.append("\",\"nonceStr\":\"").append(prepay.get("nonce_str"))
-		.append("\",\"package\":\"prepay_id=").append(prepay.get("prepay_id"))
-		.append("\",\"signType\":\"").append("MD5")
-		.append("\",\"paySign\":\"").append(prepay.get("sign"))
-		.append("\"}}");
-		
-		return json.toString();
-	}
-	
+		String prepay_id = prepay.get("prepay_id");
 
-	public abstract String  payNotify(InputStream requestInputStream);
+		Map<String,String> params2 = new HashMap<String, String>();
+		params2.put("appId", set.getAppId());
+		params2.put("timeStamp", Long.toString(System.currentTimeMillis() / 1000));
+		params2.put("nonceStr", WechatUtil.getRandomStringByLength(32));
+		params2.put("package", "prepay_id="+prepay_id);
+		params2.put("signType", "MD5");
+		params2.put("paySign",wechat.getPaySign(params2, set.getMchKey()));
+		
+		return params2;
+	}
 	
 	/*
 	public String  payNotify(InputStream requestInputStream)

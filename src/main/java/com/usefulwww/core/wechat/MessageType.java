@@ -61,7 +61,12 @@ public enum MessageType {
 	/**
 	 * 取消关注事件
 	 */
-	unsubscribe("unsubscribe");
+	unsubscribe("unsubscribe"),
+	
+	snsapi_base ("snsapi_base "),
+	
+	snsapi_userinfo ("snsapi_userinfo ");
+	
 	
 	private String msgType = "";
 

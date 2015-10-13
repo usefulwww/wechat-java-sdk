@@ -333,11 +333,11 @@ public class Wechat {
         for(int i = 0; i < size; i ++) {
             sb.append(arrayToSort[i]);
         }
-        String result = sb.toString();
-        result += "key=" + key;
-        //logger.debug("Sign Before MD5:" + result);
-        result = WechatUtil.MD5(result).toUpperCase();
-        //logger.debug("Sign Result:" + result);
+        String post = sb.toString();
+        post += "key=" + key;
+        logger.debug("Sign Before MD5:" + post);
+        String result = WechatUtil.MD5(post).toUpperCase();
+        logger.debug("Sign Result:" + result);
         return result;
     }
 
@@ -392,6 +392,61 @@ public class Wechat {
     	return false;
     }
 
-	
+    
+    public boolean createMenu(String accessToken,List<Menu> list) {
+    	String json = "{\"button\":[";
+		String str = "";
+		for (Menu menu : list) {
+			if("click".equals(menu.getType())){
+				if((null == menu.getSub_button() ||  "".equals(menu.getSub_button()))&&"0".equals(menu.getParentId())){
+//				if("0".equals(menu.getParentId())){
+					str += "{\"type\":\"click\",\"name\":\""+menu.getName()+"\",\"key\":\""+menu.getKey()+"\"},";
+				}else if((null != menu.getSub_button() && "".equals(menu.getSub_button())==false)&&"0".equals(menu.getParentId())){
+//				}else{
+					str +=  "{\"name\":\""+menu.getName()+"\",\"sub_button\":[";
+					for (Menu menu1 : list) {
+						if(menu1.getParentId().equals(String.valueOf(menu.getId()))){
+							if("click".equals(menu1.getType())){
+								str += "{\"type\":\"click\",\"name\":\""+menu1.getName()+"\",\"key\":\""+menu1.getKey()+"\"},";
+							}
+							else if("view".equals(menu1.getType())&&"0".equals(menu1.getParentId())==false){
+								String url = menu1.getUrl();
+								str += "{\"type\":\"view\",\"name\":\""+menu1.getName()+"\",\"url\":\""+url+"\"},";
+							}
+						}
+					}
+					str = str.substring(0,str.length()-1);
+					str += "]},";
+				}
+			}else if("view".equals(menu.getType())&&"0".equals(menu.getParentId())){
+				System.out.println("menu: "+menu);
+				String url =menu.getUrl();
+				str += "{\"type\":\"view\",\"name\":\""+menu.getName()+"\",\"url\":\""+url+"\"},";
+			}
+		}
+		str = str.substring(0,str.length()-1);
+		str += "]}";
+		json += str;
+		
+		return createMenu(accessToken,json);
+    }
+    
+    /**
+     * 菜单创建
+     * @param accessToken
+     * @param json
+     * @return
+     */
+	public boolean createMenu(String accessToken,String json){
+		
+		
+		
+		HttpClient client = new HttpClient();
+		String url = "https://api.weixin.qq.com/cgi-bin/menu/create?access_token="+accessToken;
+		boolean isOk = client.send(url, HttpClient.METHOD.POST,json);
+		System.out.println(client.getContent());
+		return isOk;
+	}
+
 
 }
