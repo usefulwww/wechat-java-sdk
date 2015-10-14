@@ -24,6 +24,8 @@ public class User {
 	private String remark;
 	private String groupid;
 	
+	private long userId;
+	
 	public String getId() {
 		return id;
 	}
@@ -139,6 +141,12 @@ public class User {
 	}
 	public void setGroupid(String groupid) {
 		this.groupid = groupid;
+	}
+	public long getUserId() {
+		return userId;
+	}
+	public void setUserId(long userId) {
+		this.userId = userId;
 	}
 	
 }

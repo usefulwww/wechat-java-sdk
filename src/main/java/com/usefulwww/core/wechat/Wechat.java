@@ -19,18 +19,11 @@ package com.usefulwww.core.wechat;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.URLEncoder;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -40,20 +33,11 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.DOMException;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
-
-import com.usefulwww.core.wechat.HttpClient.METHOD;
 
 
 /**
@@ -462,6 +446,7 @@ public class Wechat {
 		client.send(url, HttpClient.METHOD.GET);
 		//解析json
 		String content = client.getContent();
+		logger.debug("userInfo: "+content);
 		
 		Map<String,String> map = new HashMap<String, String>();
     	
@@ -483,10 +468,14 @@ public class Wechat {
 		user.setCountry(map.get("country"));
 		user.setHeadImgUrl(map.get("headImgUrl"));
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-		try {
-			user.setSubscribeTime(sdf.parse(map.get("subscribe_time")));
-		} catch (ParseException e) {
-		}
+//		try {
+//			logger.debug("subscribe_time: "+map.get("subscribe_time"));
+//			long time = Integer.parseInt(map.get("subscribe_time"));
+//			String subscribe_time = sdf.format(time);
+//			Date sub_date = sdf.parse(subscribe_time);
+//			user.setSubscribeTime(sub_date);
+//		} catch (ParseException e) {
+//		}
 		user.setRemark(map.get("remark"));
 		user.setGroupid(map.get("groupid"));
 		
