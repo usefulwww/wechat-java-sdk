@@ -1,9 +1,10 @@
 package com.usefulwww.core.wechat;
 
+import java.sql.Timestamp;
 import java.util.Date;
 
 public class User {
-	private String id; //编号（作为企业号的UserID使用）',
+	private String userId; //编号（作为企业号的UserID使用）',
 	private String openId; //' COMMENT '微信OPENID',
 	private String unionId; //' COMMENT 'unionId',
 	private String nickName; //微信昵称',
@@ -24,13 +25,34 @@ public class User {
 	private String remark;
 	private String groupid;
 	
+	/**
+	 * 真实姓名
+	 */
+	private String realName;
+	/**
+	 * 城区
+	 */
+	private String area;
+	/**
+	 * 住址
+	 */
+	private String address;
+	/**
+	 * 邮编
+	 */
+	private String zcode;
 	
-	public String getId() {
-		return id;
-	}
-	public void setId(String id) {
-		this.id = id;
-	}
+	/**
+	 * 电话
+	 */
+	private String phone;
+	
+	/**
+	 * 创建时间
+	 */
+	private Timestamp createTime;
+	
+	
 	public String getOpenId() {
 		return openId;
 	}
@@ -141,6 +163,57 @@ public class User {
 	public void setGroupid(String groupid) {
 		this.groupid = groupid;
 	}
+	
+
+	public String getPhone() {
+		return phone;
+	}
+	public void setPhone(String phone) {
+		this.phone = phone;
+	}
+	
+
+	public String getRealName() {
+		return realName;
+	}
+	public void setRealName(String realName) {
+		this.realName = realName;
+	}
+
+
+	public String getArea() {
+		return area;
+	}
+	public void setArea(String area) {
+		this.area = area;
+	}
+	
+	public String getAddress() {
+		return address;
+	}
+	public void setAddress(String address) {
+		this.address = address;
+	}
+	public String getZcode() {
+		return zcode;
+	}
+	public void setZcode(String zcode) {
+		this.zcode = zcode;
+	}
+	
+	public Timestamp getCreateTime() {
+		return createTime;
+	}
+	public void setCreateTime(Timestamp createTime) {
+		this.createTime = createTime;
+	}
+	public String getUserId() {
+		return userId;
+	}
+	public void setUserId(String userId) {
+		this.userId = userId;
+	}
+	
 	
 	
 }
